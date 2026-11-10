@@ -1,4 +1,8 @@
 
+# ============================================================
+# AegisData AI — Git Ignore Configuration
+# ============================================================
+
 # Python
 __pycache__/
 *.py[cod]
@@ -7,6 +11,7 @@ __pycache__/
 .ruff_cache/
 .mypy_cache/
 .coverage
+.coverage.*
 htmlcov/
 dist/
 build/
@@ -25,15 +30,16 @@ env/
 *.p12
 
 # AWS / Terraform
-# Terraform local working files
 **/.terraform/*
 *.tfstate
 *.tfstate.*
 *.tfplan
 tfplan
 crash.log
+crash.*.log
+.terraform.tfstate.lock.info
 
-# Local variables and secrets
+# Terraform local variables and secrets
 *.tfvars
 !*.tfvars.example
 *.tfvars.json
@@ -50,9 +56,23 @@ spark-warehouse/
 metastore_db/
 derby.log
 
-# Logs
+# Application logs
 *.log
 logs/
+
+# Phase 8F — Agent Observability
+# Keep local audit events out of version control
+reports/observability/
+
+# Phase 8F — Installer backups
+*.phase8f.bak
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
 
 # IDE / OS
 .vscode/

@@ -24,6 +24,7 @@ if str(ROOT) not in sys.path:
 
 from agents.data_quality.agent import DEFAULT_REPORT, analyze_default_report  # noqa: E402
 from agents.data_quality.phase8e_guard import guarded_explanation  # noqa: E402
+from agents.data_quality.phase8f_observability import observed_explanation  # noqa: E402
 
 
 BEDROCK_PROFILE = "aegisdata"
@@ -214,11 +215,14 @@ def render_ai_data_quality() -> None:
             }
 
         with st.spinner("Requesting an explanation from Bedrock..."):
-            response = guarded_explanation(
+            response, audit_saved = observed_explanation(
                 deterministic=trusted,
                 reasoner=verified_reasoner,
                 allow_live=enabled,
             )
+
+        if not audit_saved:
+            st.warning("The AI response was processed, but its local audit event could not be saved.")
 
         if response.get("mode") == "bedrock":
             st.markdown(response["ai_explanation"])

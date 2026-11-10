@@ -12,8 +12,10 @@ from revenue_analytics import render_revenue_analytics
 from customer_intelligence import render_customer_intelligence
 from product_performance import render as render_product_performance
 from inventory_health import render_inventory_health
+from ai_data_quality import render_ai_data_quality
 
 from payment_analytics import render_payment_analytics
+from agent_observability import render_agent_observability
 
 
 from pathlib import Path
@@ -113,6 +115,7 @@ def load_sales_detail() -> pd.DataFrame:
 
 with st.sidebar:
     st.header("Navigation")
+
     page = st.radio(
         "Choose a dashboard",
         [
@@ -122,6 +125,8 @@ with st.sidebar:
             "Product Performance",
             "Inventory Health",
             "Payment Analytics",
+            "AI Data Quality",
+            "Agent Observability",
         ],
     )
     if st.button("Refresh Athena data", use_container_width=True):
@@ -253,6 +258,17 @@ elif page == "Payment Analytics":
     except Exception as exc:
         st.error("Unable to load Payment Analytics from AWS Athena.")
         st.exception(exc)
+
+elif page == "AI Data Quality":
+    try:
+        render_ai_data_quality()
+    except Exception as exc:
+        st.error("Unable to load AI Data Quality dashboard.")
+        st.exception(exc)
+
+elif page == "Agent Observability":
+    render_agent_observability()
+
 else:
     st.header(page)
     st.info(
