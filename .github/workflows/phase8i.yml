@@ -1,0 +1,70 @@
+name: Phase 8I - Consolidated offline regression
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integration-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      AWS_EC2_METADATA_DISABLED: 'true'
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_REGION: us-east-1
+      PYTHONPATH: ${{ github.workspace }}
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-ci.txt
+      - name: Install offline test dependencies
+        run: python -m pip install -r requirements-ci.txt
+      - name: Compile dashboard and agent modules
+        run: |
+          python - <<'PY'
+          import ast
+          from pathlib import Path
+          paths = list(Path('dashboard').glob('*.py')) + list(Path('agents/data_quality').glob('*.py'))
+          if not paths:
+              raise SystemExit('No application modules found')
+          for path in paths:
+              ast.parse(path.read_text(encoding='utf-8-sig'), filename=str(path))
+              print('OK:', path)
+          PY
+      - name: Run consolidated deterministic tests (no AWS)
+        run: |
+          python -m pytest -o addopts='' \
+            tests/test_athena_client_contract.py \
+            tests/test_dashboard_offline.py \
+            tests/test_agent_report_reader.py \
+            tests/test_bedrock_reasoner.py \
+            tests/test_data_quality_agent.py \
+            tests/test_phase8e_deterministic.py \
+            tests/test_phase8e_guard.py \
+            tests/test_phase8f_observability.py \
+            tests/test_phase8g_evaluation.py \
+            tests/test_phase8h_security.py \
+            -m 'not live' -v -ra \
+            --junitxml=phase8i-offline-results.xml
+      - name: Inspect tracked release inventory (non-blocking until all source is published)
+        run: python tools/phase8i_audit.py
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase8i-offline-results
+          path: phase8i-offline-results.xml
+          if-no-files-found: ignore
+          retention-days: 14
