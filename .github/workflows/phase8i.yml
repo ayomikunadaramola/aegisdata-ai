@@ -58,8 +58,8 @@ jobs:
             tests/test_phase8h_security.py \
             -m 'not live' -v -ra \
             --junitxml=phase8i-offline-results.xml
-      - name: Inspect tracked release inventory (non-blocking until all source is published)
-        run: python tools/phase8i_audit.py
+      - name: Enforce strict release inventory
+        run: python tools/phase8i_audit.py --strict      
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
