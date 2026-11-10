@@ -7,7 +7,7 @@
 [![Phase 8H Security](https://github.com/ayomikunadaramola/aegisdata-ai/actions/workflows/phase8h.yml/badge.svg)](https://github.com/ayomikunadaramola/aegisdata-ai/actions/workflows/phase8h.yml)
 
 **Repository:** https://github.com/ayomikunadaramola/aegisdata-ai  
-**Status:** Working local demonstration; final repository inventory and release-readiness checks are in progress. **Not represented as a production deployment.**  
+**Status:** Release candidate, ready for manual review. Published source inventory and GitHub offline CI have passed; local Phase 8J-D reconciliation reported 29/29 successful checks. **Not a production deployment or certification.**  
 **License:** [MIT](LICENSE)
 
 ## Overview
@@ -16,7 +16,7 @@ AegisData AI is an end-to-end engineering portfolio project that connects **synt
 
 The current demonstrated workflow combines a local data pipeline and Gold validation report with AWS Athena analytics. The AI data-quality agent reads the local Gold validation result, produces deterministic findings, and can request **non-authoritative** natural-language commentary from Amazon Nova Lite. A model response cannot change the validation outcome or execute remediation.
 
-> **Scope note:** The GitHub repository currently contains the dashboard and Phase 8 components, but some ingestion, transformation, SQL, and Terraform source files have existed only in the local working tree. Those components are documented below based on the local inventory and development evidence, **not presented as already released or reproducible from the published checkout**. See [Release-readiness checklist](#release-readiness-checklist).
+> **Publication note:** Bronze ingestion, Silver/Gold scripts, SQL analytics, Terraform source, dashboards, and Phase 8 agent modules are now published on `main`. Published source alone does **not** establish a fully reproducible cloud deployment. See [Release-readiness checklist](#release-readiness-checklist).
 
 ## Architecture
 
@@ -72,7 +72,7 @@ The project uses synthetic business entities such as **customers, products, orde
 
 ### 2. Bronze: ingest raw data
 
-**Known local source:** `ingestion/batch/bronze_ingest.py`.
+**Published source:** [`ingestion/batch/bronze_ingest.py`](ingestion/batch/bronze_ingest.py).
 
 Bronze is the raw ingestion layer. It preserves source records and organizes ingestion runs into identifiable batches so later stages can determine which input was processed. A batch should be considered usable only after required datasets and completion criteria are satisfied; incomplete batches must not silently flow downstream.
 
@@ -80,13 +80,13 @@ Bronze is the raw ingestion layer. It preserves source records and organizes ing
 
 ### 3. Silver: inspect, validate, and standardize
 
-**Known local sources:** `pipelines/silver/inspect_bronze.py` and `pipelines/silver/transform_silver.py`.
+**Published sources:** [`pipelines/silver/inspect_bronze.py`](pipelines/silver/inspect_bronze.py) and [`pipelines/silver/transform_silver.py`](pipelines/silver/transform_silver.py).
 
 Silver reads a complete Bronze batch, evaluates source compatibility and relationships, applies transformations, and produces cleaner typed datasets suitable for business modelling. Checks should cover nulls, invalid values, duplicates, date and type conversions, and relationships among customers, orders, products, and payments. The Silver transformation test is maintained in `tests/test_silver_transformation.py`.
 
 ### 4. Gold: construct analytical models
 
-**Known local source:** `pipelines/gold/build_gold.py`; historical development versions `build_gold_v1.py` through `build_gold_v5.py` also exist locally. **Use the current `build_gold.py` as the intended entry point only after verifying its latest behavior; historical versions are not separate production pipelines.**
+**Published source:** [`pipelines/gold/build_gold.py`](pipelines/gold/build_gold.py); historical `build_gold_v1.py` through `build_gold_v5.py` are tracked for development traceability. **Verify current CLI behavior before using `build_gold.py`; the historical versions are not separate production pipelines.**
 
 Gold converts validated records into queryable aggregates/dimensions for reporting. The demonstrated analytics cover revenue, daily sales, customer segments, product performance, inventory health, and payment performance.
 
@@ -163,7 +163,9 @@ The sidebar includes **Refresh Athena data** to clear the dashboard query cache.
 | **8F** | Best-effort sanitized operational audit events and dashboard | `agents/data_quality/phase8f_observability.py`, `dashboard/agent_observability.py` |
 | **8G** | Rolling-window reliability metrics and provisional SLOs | `agents/data_quality/phase8g_evaluation.py` |
 | **8H** | Offline security/governance baseline | `agents/data_quality/phase8h_security.py` |
-| **8I** | Repository inventory, integration testing and release gate | Local `tools/phase8i_audit.py`; workflow publication pending verification |
+| **8I** | Strict Git-tracked inventory, offline integration testing and release gate | `tools/phase8i_audit.py`, `.github/workflows/phase8i.yml` |
+| **8J-D** | Read-only Gold-to-Athena and dashboard KPI reconciliation | `tools/phase8jd_reconcile.py` |
+| **8J-E** | Release acceptance verification and offline test gate | `tools/phase8je_acceptance.py` |
 
 ### Deterministic mode (no AWS needed)
 
@@ -230,15 +232,15 @@ aegisdata-ai/
 ├── data/                         # Local data workspace; generated records stay untracked
 ├── data_quality/                 # Data quality workspace
 ├── docs/                         # Architecture and implementation notes
-├── infrastructure/terraform/     # Local IaC; publication still under release audit
-├── ingestion/batch/              # Local Bronze ingestion script
+├── infrastructure/terraform/     # Published IaC (secrets and state excluded)
+├── ingestion/batch/              # Published Bronze ingestion script
 ├── ml/                           # ML workspace; scope not independently verified
-├── pipelines/silver/             # Local Bronze inspection and Silver transformation
-├── pipelines/gold/               # Local Gold model builder and historical versions
+├── pipelines/silver/             # Published Bronze inspection and Silver transformation
+├── pipelines/gold/               # Published Gold model builder and historical versions
 ├── reports/                      # Local validation and agent audit artifacts
-├── sql/analytics/                # Local read-oriented analytical SQL examples
+├── sql/analytics/                # Published analytical SQL examples
 ├── tests/                        # Data, dashboard, and Phase 8 regression suites
-├── tools/                        # Local validation/release utilities
+├── tools/                        # Release audit/reconciliation/acceptance scripts
 ├── .env.example                  # Configuration template; verify placeholder values
 ├── .gitignore
 ├── pyproject.toml
@@ -247,7 +249,7 @@ aegisdata-ai/
 └── README.md
 ```
 
-This tree represents the **combined published and locally observed workspace**, not a claim that every path is currently tracked on GitHub. Generated data, private logs and Terraform state must remain excluded.
+This is a **conceptual** workspace tree. Published source directories are tracked, while optional workspaces (`api/`, `data/`, `ml/`, `reports/`) may be local-only or empty. Generated data, private logs and Terraform state remain excluded.
 
 ## Local development and setup
 
@@ -304,7 +306,7 @@ python -m pytest -o addopts="" tests/test_phase8e_guard.py tests/test_phase8f_ob
 python -m agents.data_quality.phase8h_security
 ```
 
-Run individual checks if your local checkout has their corresponding test files. To exercise the full pipeline, first publish and verify the remaining local ingestion, transformation and SQL sources and their validated execution order.
+The pipeline source is published. Executing the entire pipeline still requires local test data, compatible Spark tooling, and verification of the current script arguments and execution order.
 
 ### Step 5: Inspect validation and launch the dashboard
 
@@ -325,7 +327,7 @@ python -m pytest -o addopts="" tests/test_athena_client_contract.py tests/test_d
 python -m pytest -o addopts="" tests/test_phase8e_guard.py tests/test_phase8f_observability.py tests/test_phase8g_evaluation.py tests/test_phase8h_security.py -v
 ```
 
-A previously observed Phase 8I regression command reported **90 passing offline tests** across the selected test modules. That is a historical test result, not a claim that the latest checkout or a newly provisioned environment has been retested. Verify the workflows in the [Actions tab](https://github.com/ayomikunadaramola/aegisdata-ai/actions) after each relevant commit.
+Recent local runs reported **158 offline tests passing, 8 live tests deselected**, and a separate **8/8 live dashboard tests passing** with AWS credentials. At the inspected published commit `86cbeb3f` (10 November 2026), the **Offline CI** and **Phase 8I consolidated regression** workflows succeeded. These scoped results do not certify a production environment. Recheck the [Actions tab](https://github.com/ayomikunadaramola/aegisdata-ai/actions) after subsequent commits.
 
 ## Data contracts and important operational limitations
 
@@ -340,20 +342,50 @@ A previously observed Phase 8I regression command reported **90 passing offline 
 - **Security:** `.gitignore` protects against accidental additions but not secrets already committed in Git history. Review and rotate exposed credentials promptly.
 - **Deployment:** local Streamlit is not an authenticated multi-user production application. Review access control, least-privilege IAM, networking, and secret management before exposing it externally.
 
-## Release-readiness checklist
+## Phase 8J: reconciliation and acceptance evidence
 
-The ongoing Phase 8I audit currently reports a **blocked release inventory**, rather than a completed release. Resolve these before labeling the project fully reproducible:
+### 8J-D — Gold-to-Athena reconciliation
 
-- [ ] Write and commit this root `README.md`.
-- [ ] Review `.env.example` for placeholders only; commit the safe template.
-- [ ] Inspect and commit intended pipeline source from `ingestion/`, `pipelines/`, `sql/analytics/`, and safe Terraform `.tf` configuration.
-- [ ] Keep `.terraform/`, `.tfstate`, `.tfvars`, plans, local datasets, `.env`, and audit logs **untracked**; commit safe `.terraform.lock.hcl` if appropriate.
-- [ ] Document verified generator → Bronze → Silver → Gold → validation commands and schema contracts.
-- [ ] Replace the environment-specific Athena S3 output location with a configurable setting.
-- [ ] Replace/regenerate the machine-specific `requirements.txt` if it remains a supported install method.
-- [ ] Confirm a clean checkout can install and run all declared offline test jobs.
-- [ ] Validate live AWS permissions, deployment isolation, billing limits, and end-to-end data publication separately.
-- [ ] Review GitHub Actions results, release artifacts, screenshots and any production claims before tagging a release.
+With authenticated AWS access and a complete local Gold run, execute from the repository root:
+
+```cmd
+aws login --profile aegisdata
+aws sts get-caller-identity --profile aegisdata
+python tools/phase8jd_reconcile.py
+```
+
+The read-only check compares five local Gold marts with their Athena counterparts. Monetary comparisons use `Decimal`, and historical executive dashboard figures are **observed snapshots**, not immutable requirements. On 10 November 2026, the local run returned **PASS: 29 checks, 0 failures** after authentication was refreshed. The local report at `reports/reconciliation/phase8jd_latest.json` is excluded from version control. This is evidence for the specific data and AWS environment tested, not an automatic CI assertion.
+
+### 8J-E — release acceptance
+
+From the repository root:
+
+```cmd
+python tools/phase8je_acceptance.py --run-offline-tests --strict
+```
+
+The checker validates required tracked files, published source sections, test inventory, selected sensitive artifact paths, a clean tracked working tree, and optional offline pytest. The demonstrated output was **`READY_FOR_MANUAL_REVIEW`** with the offline test check passing. The generated report `reports/acceptance/phase8je_latest.json` remains local and is not committed. This result is **not** production approval.
+
+## Final repository audit (10 November 2026)
+
+The published `main` Git tree contains the Bronze ingestion, Silver/Gold pipeline sources, analytics SQL, Terraform code, Streamlit dashboard, Phase 8 AI modules, and both Phase 8J tools. The inspected tree contains **100 Git tree entries (files and directories combined)** and no obvious tracked filenames ending in sensitive extensions such as `.tfstate`, `.tfvars`, `.pem`, or `.key`. Filename review does not detect every secret and does not scan Git history.
+
+On the inspected commit `86cbeb3f`, both the **Offline CI** and **Phase 8I consolidated offline regression** GitHub Actions runs succeeded. The local Phase 8J-D reconciliation returned **29/29 PASS**, and the local Phase 8J-E acceptance returned **READY_FOR_MANUAL_REVIEW**. Evidence is scoped to those runs.
+
+### Release-readiness checklist
+
+- [x] Published source inventory covers ingestion, Silver, Gold, SQL and Terraform.
+- [x] AI quality, guardrails, observability, reliability and offline security checks are represented in tracked source.
+- [x] GitHub Offline CI and consolidated Phase 8I regression succeeded at the inspected commit.
+- [x] Local Phase 8J-D reconciliation reported PASS (29/29).
+- [x] Local Phase 8J-E release acceptance reported READY_FOR_MANUAL_REVIEW.
+- [ ] Replace or deprecate the Windows-specific editable path in `requirements.txt` (`-e c:\aws-ai-projects\aegisdata-ai`).
+- [ ] Make the hard-coded Athena result-output S3 URI in `dashboard/athena_client.py` environment-configurable.
+- [ ] Verify generator → Bronze → Silver → Gold → validation execution from a clean clone and document exact arguments.
+- [ ] Complete a human review of AWS IAM, secret history, cost exposure, release artifacts and environment assumptions.
+- [ ] Check GitHub Actions again at the eventual release commit before tagging `v1.0.0`.
+
+**Release decision: ready for manual review; not a production-certified deployment.**
 
 ## Future improvements
 
