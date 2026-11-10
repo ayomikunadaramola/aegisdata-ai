@@ -84,3 +84,14 @@ Thumbs.db
 .ipynb_checkpoints/
 
 *.phase8g.bak
+
+# Phase 8J-E — Local acceptance evidence
+reports/acceptance/
+
+# Additional generated reports
+reports/validation/
+reports/reconciliation/
+
+# Local developer artifacts
+*.phase8f.bak
+*.phase8g.bak
