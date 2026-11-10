@@ -15,8 +15,16 @@ import athena_client
 
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "dashboard" / "app.py"
-PAGES = ["Executive Overview", "Revenue Analytics", "Customer Intelligence",
-         "Product Performance", "Inventory Health", "Payment Analytics"]
+PAGES = PAGES = [
+    "Executive Overview",
+    "Revenue Analytics",
+    "Customer Intelligence",
+    "Product Performance",
+    "Inventory Health",
+    "Payment Analytics",
+    "AI Data Quality",
+    "Agent Observability",
+]
 
 
 def offline_query(sql, *args, **kwargs):
@@ -47,10 +55,11 @@ def assert_clean(at):
     errors = [str(e.message) for e in at.exception]
     assert not errors, "Streamlit exceptions: " + " | ".join(errors)
     # UI-level errors sometimes use st.error instead of raising.
-    assert not at.error, "Streamlit errors: " + " | ".join(str(e.message) for e in at.error)
+    assert not at.error, "Streamlit errors: " + \
+        " | ".join(str(e.message) for e in at.error)
 
 
-def test_navigation_contains_six_pages(app):
+def test_navigation_contains_eight_pages(app):
     assert_clean(app)
     radio = app.sidebar.radio[0]
     assert list(radio.options) == PAGES
@@ -84,7 +93,17 @@ def test_sidebar_refresh_does_not_crash(app):
 
 
 def test_expected_dashboard_modules_present():
-    for filename in ["athena_client.py", "app.py", "revenue_analytics.py",
-                     "customer_intelligence.py", "product_performance.py",
-                     "inventory_health.py", "payment_analytics.py"]:
-        assert (ROOT / "dashboard" / filename).is_file(), f"Missing {filename}"
+    for filename in [
+        "athena_client.py",
+        "app.py",
+        "revenue_analytics.py",
+        "customer_intelligence.py",
+        "product_performance.py",
+        "inventory_health.py",
+        "payment_analytics.py",
+        "ai_data_quality.py",
+        "agent_observability.py",
+    ]:
+        assert (ROOT / "dashboard" / filename).is_file(), (
+            f"Missing {filename}"
+        )
