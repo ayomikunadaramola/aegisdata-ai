@@ -82,3 +82,5 @@ Thumbs.db
 
 # Jupyter
 .ipynb_checkpoints/
+
+*.phase8g.bak
