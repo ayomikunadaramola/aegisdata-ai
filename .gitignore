@@ -3,7 +3,7 @@
 # AegisData AI — Git Ignore Configuration
 # ============================================================
 
-# Python
+# Python and package artifacts
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -29,8 +29,8 @@ env/
 *.key
 *.p12
 
-# AWS / Terraform
-**/.terraform/*
+# AWS and Terraform
+**/.terraform/
 *.tfstate
 *.tfstate.*
 *.tfplan
@@ -39,33 +39,42 @@ crash.log
 crash.*.log
 .terraform.tfstate.lock.info
 
-# Terraform local variables and secrets
+# Terraform variable files
 *.tfvars
-!*.tfvars.example
 *.tfvars.json
+!*.tfvars.example
 
-# Local generated data
+# Generated datasets and Spark output
 data/raw/*
 data/synthetic/*
 data/processed/*
+data/parquet_smoke_test/
 !data/raw/.gitkeep
 !data/synthetic/.gitkeep
 
-# Spark
 spark-warehouse/
 metastore_db/
 derby.log
 
-# Application logs
+# Logs
 *.log
 logs/
+hs_err_pid*
 
-# Phase 8F — Agent Observability
-# Keep local audit events out of version control
+# Generated reports
 reports/observability/
+reports/acceptance/
+reports/validation/
+reports/reconciliation/
 
-# Phase 8F — Installer backups
+# Local backups
+*.bak
 *.phase8f.bak
+*.phase8g.bak
+*.pre8j.bak
+
+# Local generated diagnostics
+gold_schema_output.txt
 
 # Temporary files
 *.tmp
@@ -74,7 +83,7 @@ reports/observability/
 *.swo
 *~
 
-# IDE / OS
+# IDE and operating system
 .vscode/
 .idea/
 .DS_Store
@@ -82,16 +91,3 @@ Thumbs.db
 
 # Jupyter
 .ipynb_checkpoints/
-
-*.phase8g.bak
-
-# Phase 8J-E — Local acceptance evidence
-reports/acceptance/
-
-# Additional generated reports
-reports/validation/
-reports/reconciliation/
-
-# Local developer artifacts
-*.phase8f.bak
-*.phase8g.bak
