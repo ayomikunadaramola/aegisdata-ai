@@ -1,0 +1,4 @@
+# AegisData AI - Development Dependencies
+# Includes application, testing, and linting dependencies
+
+-e ".[dev]"
