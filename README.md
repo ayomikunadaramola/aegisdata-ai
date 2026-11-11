@@ -372,6 +372,86 @@ The published `main` Git tree contains the Bronze ingestion, Silver/Gold pipelin
 
 On the inspected commit `86cbeb3f`, both the **Offline CI** and **Phase 8I consolidated offline regression** GitHub Actions runs succeeded. The local Phase 8J-D reconciliation returned **29/29 PASS**, and the local Phase 8J-E acceptance returned **READY_FOR_MANUAL_REVIEW**. Evidence is scoped to those runs.
 
+### Reproducing the Local Data Engineering Pipeline
+
+AegisData AI includes a reproducible synthetic ecommerce data pipeline implemented with Python, SQLite, and PySpark. The workflow follows a Bronze → Silver → Gold architecture.
+
+**Prerequisites**
+
+- Python 3.12 and an activated virtual environment
+- A compatible Java installation for PySpark
+- Required Python dependencies installed from `pyproject.toml`
+- On Windows, the configured local Hadoop utilities where required by Spark
+
+**Install dependencies**
+
+```cmd
+python -m pip install -e ".[dev]"
+```
+
+**Generate synthetic data**
+
+```cmd
+python data\synthetic\generate_ecommerce_data.py
+```
+
+The generator creates and validates five datasets containing 46,000 records: customers (5,000), products (500), orders (20,000), payments (20,000), and inventory (500).
+
+**Ingest into Bronze**
+
+```cmd
+python ingestion\batch\bronze_ingest.py --source data\synthetic --bronze data\raw\bronze --db data\raw\ingestion_audit.db
+```
+
+Bronze stores versioned CSV batches and ingestion metadata. The audit database detects unchanged files by checksum; rerunning with identical data can skip previously ingested files. Use a fresh audit database when independently reproducing the pipeline.
+
+**Transform into Silver**
+
+```cmd
+python pipelines\silver\transform_silver.py
+```
+
+Silver validates source schemas, data types, record counts, keys, references, and financial consistency before publishing versioned Parquet datasets.
+
+**Build Gold analytical models**
+
+```cmd
+python pipelines\gold\build_gold.py
+```
+
+Gold constructs five analytical models covering daily sales, customer segmentation, product performance, payments, and inventory health.
+
+**Inspect Gold models**
+
+```cmd
+python tools\inspect_gold_schema.py
+```
+
+The inspection utility prints the schema and row count of each Gold model.
+
+**Validated demonstration results — November 11, 2026**
+
+| Gold model | Records |
+|---|---:|
+| fact_daily_sales | 644 |
+| dim_customer_segments | 5,000 |
+| fact_product_performance | 500 |
+| fact_payment_performance | 2,351 |
+| fact_inventory_health | 500 |
+
+The demonstrated dataset produced 16,996 successful payments and ₦6,473,621,049.24 in synthetic paid sales.
+
+**Testing**
+
+```cmd
+python -m pytest -o addopts="" tests -m "not live" -q
+python tools\phase8je_acceptance.py --run-offline-tests --strict
+```
+
+The verified local test run reported 158 passed and 8 live tests deselected. The release acceptance returned `READY_FOR_MANUAL_REVIEW`.
+
+**Limitations:** These results establish successful execution in the tested Windows development environment, not an independently verified clean-clone installation. Cloud provisioning, AWS permissions, deployment configuration, security review, and production operations require separate validation. PyArrow's native Parquet extension was blocked by a Windows application-control policy in one diagnostic attempt; PySpark successfully inspected the Gold Parquet files.
+
 ### Release-readiness checklist
 
 - [x] Published source inventory covers ingestion, Silver, Gold, SQL and Terraform.
