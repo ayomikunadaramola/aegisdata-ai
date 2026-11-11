@@ -24,13 +24,21 @@ from botocore.exceptions import BotoCoreError, ClientError
 
 AWS_PROFILE = os.getenv("AWS_PROFILE", "aegisdata")
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
-ATHENA_DATABASE = "aegisdata_gold_db"
-ATHENA_WORKGROUP = "primary"
 
-ATHENA_OUTPUT = (
-    "s3://aegisdata-ai-941490574194-us-east-1/"
-    "athena-results/"
+ATHENA_DATABASE = os.getenv(
+    "ATHENA_DATABASE",
+    "aegisdata_gold_db",
 )
+
+ATHENA_WORKGROUP = os.getenv(
+    "ATHENA_WORKGROUP",
+    "primary",
+)
+
+ATHENA_OUTPUT = os.getenv(
+    "ATHENA_OUTPUT_S3",
+    "",
+).strip()
 
 
 # ============================================================
@@ -109,193 +117,130 @@ def normalize_sql(sql: str) -> str:
 
     return statement
 
-    # ============================================================
-    # ATHENA QUERY EXECUTION
-    # ============================================================
+
+# ============================================================
+# ATHENA QUERY EXECUTION
+# ============================================================
 
 
 def run_query(sql, timeout_seconds=120):
-    """Execute an Athena query and return all rows as a DataFrame.
+    """Execute a read-only Athena query and return all rows as a DataFrame.
 
-    Handles:
-        - Leading SQL comments
-        - AWS authentication
-        - Query execution
-        - Execution status polling
-        - Query failures
-        - Timeout detection
-        - Complete result pagination
-        - DataFrame construction
-
-        All returned column values are initially strings or None.
-        """
-
+    Supports SQL normalization, status polling, timeouts, pagination,
+    optional workgroup-managed S3 output, and helpful AWS error reporting.
+    Athena cell values are initially strings or None.
+    """
     statement = normalize_sql(sql)
 
     if timeout_seconds <= 0:
-        raise ValueError(
-            "timeout_seconds must be greater than zero."
-        )
+        raise ValueError("timeout_seconds must be greater than zero.")
+
+    # Athena can use either an explicitly configured S3 result location
+    # OR the result location configured on the Athena workgroup.
+    # An absent ATHENA_OUTPUT_S3 is therefore valid; do not reject it.
+    output_location = ATHENA_OUTPUT.strip()
+    if output_location:
+        # Reject malformed explicit locations before making an AWS call.
+        bucket_and_prefix = output_location[5:]
+        bucket = bucket_and_prefix.split("/", 1)[0]
+        if (
+            not output_location.startswith("s3://")
+            or not bucket
+            or any(character.isspace() for character in bucket)
+        ):
+            raise ValueError(
+                "ATHENA_OUTPUT_S3 must be a valid S3 URI, "
+                "for example s3://my-bucket/athena-results/."
+            )
 
     client = get_athena_client()
 
-    # --------------------------------------------------------
-    # START QUERY
-    # --------------------------------------------------------
+    start_args = {
+        "QueryString": statement,
+        "QueryExecutionContext": {"Database": ATHENA_DATABASE},
+        "WorkGroup": ATHENA_WORKGROUP,
+        "ResultReuseConfiguration": {
+            "ResultReuseByAgeConfiguration": {
+                "Enabled": True,
+                "MaxAgeInMinutes": 60,
+            }
+        },
+    }
+    if output_location:
+        start_args["ResultConfiguration"] = {
+            "OutputLocation": output_location
+        }
 
     try:
-        response = client.start_query_execution(
-            QueryString=statement,
-            QueryExecutionContext={
-                "Database": ATHENA_DATABASE,
-            },
-            ResultConfiguration={
-                "OutputLocation": ATHENA_OUTPUT,
-            },
-            WorkGroup=ATHENA_WORKGROUP,
-            ResultReuseConfiguration={
-                "ResultReuseByAgeConfiguration": {
-                    "Enabled": True,
-                    "MaxAgeInMinutes": 60,
-                }
-            },
-        )
-
+        response = client.start_query_execution(**start_args)
     except (ClientError, BotoCoreError) as exc:
-        raise RuntimeError(
-            f"Unable to start Athena query: {exc}"
-        ) from exc
+        raise RuntimeError(f"Unable to start Athena query: {exc}") from exc
 
     query_id = response["QueryExecutionId"]
-
-    print(
-        f"Athena query started: {query_id}",
-        flush=True,
-    )
-
+    print(f"Athena query started: {query_id}", flush=True)
     deadline = time.monotonic() + timeout_seconds
-
-    # --------------------------------------------------------
-    # WAIT FOR QUERY COMPLETION
-    # --------------------------------------------------------
 
     try:
         while True:
-
-            execution = client.get_query_execution(
-                QueryExecutionId=query_id,
-            )
-
+            execution = client.get_query_execution(QueryExecutionId=query_id)
             status = execution["QueryExecution"]["Status"]
-
             state = status["State"]
 
             if state == "SUCCEEDED":
-                print(
-                    f"Athena query {query_id}: SUCCEEDED",
-                    flush=True,
-                )
+                print(f"Athena query {query_id}: SUCCEEDED", flush=True)
                 break
-
             if state in ("FAILED", "CANCELLED"):
-
-                reason = status.get(
-                    "StateChangeReason",
-                    "No reason provided",
-                )
-
+                reason = status.get("StateChangeReason", "No reason provided")
                 raise RuntimeError(
-                    f"Athena query {query_id} "
-                    f"{state}: {reason}"
+                    f"Athena query {query_id} {state}: {reason}"
                 )
-
             if time.monotonic() >= deadline:
                 raise TimeoutError(
-                    f"Athena query {query_id} did not reach "
-                    f"SUCCEEDED within {timeout_seconds} seconds. "
+                    f"Athena query {query_id} did not reach SUCCEEDED "
+                    f"within {timeout_seconds} seconds. "
                     "Check its final status in AWS."
                 )
-
             time.sleep(2)
-
     except (ClientError, BotoCoreError) as exc:
         raise RuntimeError(
-            f"Unable to monitor Athena query {query_id}: "
-            f"{exc}"
+            f"Unable to monitor Athena query {query_id}: {exc}"
         ) from exc
-
-    # --------------------------------------------------------
-    # RETRIEVE ALL QUERY RESULT PAGES
-    # --------------------------------------------------------
-
-    paginator = client.get_paginator("get_query_results")
-    pages = paginator.paginate(
-        QueryExecutionId=query_id,
-        PaginationConfig={"PageSize": 1000},
-    )
 
     columns = []
     records = []
     first_row_seen = False
+    try:
+        paginator = client.get_paginator("get_query_results")
+        pages = paginator.paginate(
+            QueryExecutionId=query_id,
+            PaginationConfig={"PageSize": 1000},
+        )
+        for page in pages:
+            result_set = page["ResultSet"]
+            if not columns:
+                columns = [
+                    item["Name"]
+                    for item in result_set["ResultSetMetadata"]["ColumnInfo"]
+                ]
+            for row in result_set.get("Rows", []):
+                values = [
+                    cell.get("VarCharValue")
+                    for cell in row.get("Data", [])
+                ]
+                values.extend([None] * max(0, len(columns) - len(values)))
+                values = values[:len(columns)]
+                if not first_row_seen:
+                    first_row_seen = True
+                    if values == columns:
+                        continue
+                records.append(values)
+    except (ClientError, BotoCoreError) as exc:
+        raise RuntimeError(
+            f"Unable to retrieve Athena query {query_id} results: {exc}"
+        ) from exc
 
-    for page in pages:
-        result_set = page["ResultSet"]
-
-        if not columns:
-            columns = [
-                col["Name"]
-                for col in result_set[
-                    "ResultSetMetadata"
-                ]["ColumnInfo"]
-            ]
-
-        for row in result_set.get("Rows", []):
-            values = [
-                cell.get("VarCharValue")
-                for cell in row.get("Data", [])
-            ]
-
-            values.extend(
-                [None] * max(0, len(columns) - len(values))
-            )
-            values = values[:len(columns)]
-
-            if not first_row_seen:
-                first_row_seen = True
-
-                # Skip the column header only if present.
-                if values == columns:
-                    continue
-
-            records.append(values)
-
-    result = pd.DataFrame(
-        records,
-        columns=columns,
-    )
-
-    print(
-        f"Athena returned {len(result)} rows",
-        flush=True,
-    )
-
-    return result
-
-    # --------------------------------------------------------
-    # BUILD DATAFRAME
-    # IMPORTANT: Outside both pagination loops.
-    # --------------------------------------------------------
-
-    result = pd.DataFrame(
-        records,
-        columns=columns,
-    )
-
-    print(
-        f"Athena returned {len(result)} rows",
-        flush=True,
-    )
-
+    result = pd.DataFrame(records, columns=columns)
+    print(f"Athena returned {len(result)} rows", flush=True)
     return result
 
 
