@@ -28,7 +28,8 @@ REQUIRED = (
     '.github/workflows/ci.yml',
     '.github/workflows/phase8i.yml',
 )
-REQUIRED_DIRS = ('ingestion/', 'pipelines/', 'infrastructure/', 'sql/', 'tests/')
+REQUIRED_DIRS = ('ingestion/', 'pipelines/',
+                 'infrastructure/', 'sql/', 'tests/')
 TEST_FILES = (
     'tests/test_athena_client_contract.py',
     'tests/test_dashboard_offline.py',
@@ -58,8 +59,17 @@ def sensitive(path: str) -> bool:
         return name != 'terraform.tfvars.example'
     if 'reports' in parts:
         return name != '.gitkeep'
-    if 'data' in parts and any(s in parts for s in ('raw', 'synthetic', 'processed')):
+
+    if 'data' in parts and any(
+        s in parts for s in ('raw', 'synthetic', 'processed')
+    ):
+        # Explicitly allow the reviewed synthetic generator source.
+        if p == 'data/synthetic/generate_ecommerce_data.py':
+            return False
+
+        # Continue blocking generated datasets and other artifacts.
         return name != '.gitkeep'
+
     return False
 
 
@@ -71,9 +81,11 @@ def run_audit(run_tests: bool = False) -> dict:
                              if not any(p.startswith(d) for p in tracked))
     flagged = sorted(p for p in tracked if sensitive(p))
     missing_tests = sorted(p for p in TEST_FILES if p not in tracked)
-    changes = git('status', '--porcelain', '--untracked-files=no').stdout.strip()
+    changes = git('status', '--porcelain',
+                  '--untracked-files=no').stdout.strip()
     # Untracked files are noted but not read or published.
-    untracked = git('ls-files', '--others', '--exclude-standard').stdout.splitlines()
+    untracked = git('ls-files', '--others',
+                    '--exclude-standard').stdout.splitlines()
     report = {
         'phase': '8J-E', 'generated_at_utc': datetime.now(timezone.utc).isoformat(),
         'git_head': git('rev-parse', '--short', 'HEAD').stdout.strip(),
@@ -100,7 +112,8 @@ def run_audit(run_tests: bool = False) -> dict:
                                        text=True, timeout=600, check=False)
             report['offline_test_result'] = 'PASS' if completed.returncode == 0 else 'FAIL'
             report['offline_test_exit_code'] = completed.returncode
-            report['offline_test_tail'] = '\n'.join((completed.stdout + '\n' + completed.stderr).splitlines()[-12:])
+            report['offline_test_tail'] = '\n'.join(
+                (completed.stdout + '\n' + completed.stderr).splitlines()[-12:])
         except subprocess.TimeoutExpired:
             report['offline_test_result'] = 'TIMEOUT'
     checks_ok = all(item['pass'] for item in report['checks'].values())
@@ -134,7 +147,8 @@ def main() -> int:
         if not output.is_relative_to(ROOT / 'reports' / 'acceptance'):
             raise ValueError('Output must be inside reports/acceptance')
         output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
+        output.write_text(json.dumps(result, indent=2) +
+                          '\n', encoding='utf-8')
     except (OSError, subprocess.SubprocessError, ValueError) as exc:
         print(f'Acceptance audit error: {type(exc).__name__}', file=sys.stderr)
         return 2
