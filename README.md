@@ -452,20 +452,26 @@ The verified local test run reported 158 passed and 8 live tests deselected. The
 
 **Limitations:** These results establish successful execution in the tested Windows development environment, not an independently verified clean-clone installation. Cloud provisioning, AWS permissions, deployment configuration, security review, and production operations require separate validation. PyArrow's native Parquet extension was blocked by a Windows application-control policy in one diagnostic attempt; PySpark successfully inspected the Gold Parquet files.
 
+
 ### Release-readiness checklist
 
-- [x] Published source inventory covers ingestion, Silver, Gold, SQL and Terraform.
-- [x] AI quality, guardrails, observability, reliability and offline security checks are represented in tracked source.
-- [x] GitHub Offline CI and consolidated Phase 8I regression succeeded at the inspected commit.
-- [x] Local Phase 8J-D reconciliation reported PASS (29/29).
-- [x] Local Phase 8J-E release acceptance reported READY_FOR_MANUAL_REVIEW.
-- [ ] Replace or deprecate the Windows-specific editable path in `requirements.txt` (`-e c:\aws-ai-projects\aegisdata-ai`).
-- [ ] Make the hard-coded Athena result-output S3 URI in `dashboard/athena_client.py` environment-configurable.
-- [ ] Verify generator → Bronze → Silver → Gold → validation execution from a clean clone and document exact arguments.
-- [ ] Complete a human review of AWS IAM, secret history, cost exposure, release artifacts and environment assumptions.
-- [ ] Check GitHub Actions again at the eventual release commit before tagging `v1.0.0`.
+- [x] Published source inventory covers ingestion, Silver, Gold, SQL, and Terraform.
+- [x] Synthetic ecommerce generator source is tracked.
+- [x] Synthetic data generation validated: 46,000 records.
+- [x] Local Bronze → Silver → Gold execution completed successfully.
+- [x] All five Gold models inspected with PySpark.
+- [x] Offline regression suite passed: 158 tests, 8 live tests deselected.
+- [x] Local Gold-to-Athena reconciliation passed: 29/29 checks.
+- [x] Release acceptance returned READY_FOR_MANUAL_REVIEW.
+- [x] Replaced Windows-specific editable dependency path.
+- [x] Configured Athena query-results output using environment settings.
+- [x] Documented local pipeline reproduction commands.
+- [ ] Independently verify installation and execution from a clean clone.
+- [ ] Complete manual AWS IAM, credentials-history, and cost review.
+- [ ] Confirm GitHub Actions checks pass at the final release commit.
+- [ ] Publish the v0.1.0 GitHub release.
 
-**Release decision: ready for manual review; not a production-certified deployment.**
+**Release decision:** Ready for manual review. Not production-certified.
 
 ## Future improvements
 
