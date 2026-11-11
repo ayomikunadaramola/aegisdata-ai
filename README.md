@@ -18,6 +18,16 @@ The current demonstrated workflow combines a local data pipeline and Gold valida
 
 > **Publication note:** Bronze ingestion, Silver/Gold scripts, SQL analytics, Terraform source, dashboards, and Phase 8 agent modules are now published on `main`. Published source alone does **not** establish a fully reproducible cloud deployment. See [Release-readiness checklist](#release-readiness-checklist).
 
+
+## Platform Preview
+
+AegisData AI combines AWS-powered data engineering, business analytics, and guarded agentic AI intelligence.
+
+![AegisData AI Executive Overview](screenshots/01-executive-overview.png)
+
+*Executive Overview — paid revenue, customer metrics, order performance, and sales trends.*
+
+
 ## Architecture
 
 ```mermaid
@@ -148,6 +158,40 @@ Open the local URL printed in the terminal (typically `http://localhost:8501`; a
 | **Agent Observability** | Local agent activity, token usage, latency, execution outcomes, reliability evaluation |
 
 The sidebar includes **Refresh Athena data** to clear the dashboard query cache. That action is for Athena-backed data; it does not itself regenerate Bronze/Silver/Gold files or repair data.
+
+
+## Project Screenshots
+
+### Business Analytics
+
+| Revenue Analytics | Customer Intelligence |
+|---|---|
+| ![Revenue Analytics](screenshots/02-revenue-analytics.png) | ![Customer Intelligence](screenshots/03-customer-intelligence.png) |
+
+| Product Performance | Inventory Health |
+|---|---|
+| ![Product Performance](screenshots/07-product-performance.png) | ![Inventory Health](screenshots/04-inventory-health.png) |
+
+| Payment Analytics |
+|---|
+| ![Payment Analytics](screenshots/08-payment-analytics.png) |
+
+### Agentic AI and Observability
+
+| AI Data Quality | Agent Observability |
+|---|---|
+| ![AI Data Quality](screenshots/05-ai-data-quality.png) | ![Agent Observability](screenshots/06-agent-observability.png) |
+
+### Data Pipeline and AWS Validation
+
+| Bronze → Silver → Gold | Athena Reconciliation |
+|---|---|
+| ![Data Pipeline](screenshots/09-bronze-silver-gold-pipeline.png) | ![Athena Reconciliation](screenshots/10-athena-reconciliation.png) |
+
+### Automated Testing
+
+![GitHub Actions CI](screenshots/11-github-actions.png)
+
 
 ## Agentic data-quality design (Phase 8)
 
