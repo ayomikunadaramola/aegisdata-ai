@@ -47,10 +47,11 @@ crash.*.log
 # Generated datasets and Spark output
 data/raw/*
 data/synthetic/*
+!data/synthetic/generate_ecommerce_data.py
+!data/synthetic/.gitkeep
 data/processed/*
 data/parquet_smoke_test/
 !data/raw/.gitkeep
-!data/synthetic/.gitkeep
 
 spark-warehouse/
 metastore_db/
