@@ -1,22 +1,43 @@
+
 # AegisData AI
 
-**AWS-powered data engineering, analytics, and guarded agentic data-quality intelligence**
+### AWS Data Engineering, Analytics & Guarded Agentic AI
+
+An end-to-end data engineering portfolio platform combining **PySpark Medallion pipelines, Amazon S3, Athena, Streamlit dashboards, and Amazon Bedrock AI-assisted data-quality analysis**.
 
 [![Offline CI](https://github.com/ayomikunadaramola/aegisdata-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/ayomikunadaramola/aegisdata-ai/actions/workflows/ci.yml)
-[![Phase 8G Evaluation](https://github.com/ayomikunadaramola/aegisdata-ai/actions/workflows/phase8g.yml/badge.svg)](https://github.com/ayomikunadaramola/aegisdata-ai/actions/workflows/phase8g.yml)
-[![Phase 8H Security](https://github.com/ayomikunadaramola/aegisdata-ai/actions/workflows/phase8h.yml/badge.svg)](https://github.com/ayomikunadaramola/aegisdata-ai/actions/workflows/phase8h.yml)
+[![Reliability Evaluation](https://github.com/ayomikunadaramola/aegisdata-ai/actions/workflows/phase8g.yml/badge.svg)](https://github.com/ayomikunadaramola/aegisdata-ai/actions/workflows/phase8g.yml)
+[![Security Governance](https://github.com/ayomikunadaramola/aegisdata-ai/actions/workflows/phase8h.yml/badge.svg)](https://github.com/ayomikunadaramola/aegisdata-ai/actions/workflows/phase8h.yml)
 
-**Repository:** https://github.com/ayomikunadaramola/aegisdata-ai  
-**Status:** Release candidate, ready for manual review. Published source inventory and GitHub offline CI have passed; local Phase 8J-D reconciliation reported 29/29 successful checks. **Not a production deployment or certification.**  
+**Status:** Release candidate — ready for manual review. Offline CI and published source checks passed; local reconciliation reported 29/29 successful checks. Not a production deployment or certification.
+
 **License:** [MIT](LICENSE)
 
-## Overview
+## Project Overview
 
-AegisData AI is an end-to-end engineering portfolio project that connects **synthetic commerce data generation**, a **Bronze → Silver → Gold** processing design, AWS-backed analytical storage and queries, an **eight-view Streamlit dashboard**, and an **optional Amazon Bedrock data-quality explanation agent**. The design emphasizes data correctness, traceable checks, explicit AI opt-in, failure-safe behavior, and offline regression testing.
+AegisData AI demonstrates how raw commerce data can be transformed into validated, analytics-ready datasets and business intelligence using a layered data platform.
 
-The current demonstrated workflow combines a local data pipeline and Gold validation report with AWS Athena analytics. The AI data-quality agent reads the local Gold validation result, produces deterministic findings, and can request **non-authoritative** natural-language commentary from Amazon Nova Lite. A model response cannot change the validation outcome or execute remediation.
+The project combines local batch processing, AWS analytical services, deterministic data-quality evaluation, and optional AI-generated explanations.
 
-> **Publication note:** Bronze ingestion, Silver/Gold scripts, SQL analytics, Terraform source, dashboards, and Phase 8 agent modules are now published on `main`. Published source alone does **not** establish a fully reproducible cloud deployment. See [Release-readiness checklist](#release-readiness-checklist).
+### Key Engineering Capabilities
+
+- **Data Ingestion:** Synthetic commerce datasets and batch-completeness checks.
+- **Data Processing:** Bronze, Silver, and Gold transformations using Python and PySpark.
+- **Cloud Analytics:** Gold datasets integrated with Amazon S3 and Athena.
+- **Business Intelligence:** Eight-view Streamlit analytics dashboard.
+- **Agentic AI:** Optional Amazon Bedrock explanations of deterministic data-quality findings.
+- **Testing:** Offline regression tests and GitHub Actions CI.
+- **Security:** Explicit AI opt-in, safety controls, and sanitized audit logs.
+- **Infrastructure:** Terraform configuration for AWS resources.
+
+### Engineering Design Principles
+
+- Data correctness before AI-generated interpretation.
+- Traceable validation and failure-safe workflows.
+- Clear separation of local processing and cloud deployment.
+- Reproducibility, testing, and honest operational limitations.
+
+> **Release note:** This repository contains published pipeline source, dashboards, SQL analytics, infrastructure configuration, and agent modules. A fresh clone is not guaranteed to reproduce the complete AWS deployment automatically. Refer to the release-readiness checklist for verification requirements.
 
 
 ## Platform Preview
