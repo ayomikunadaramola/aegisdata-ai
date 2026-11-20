@@ -523,8 +523,9 @@ The verified local test run reported 158 passed and 8 live tests deselected. The
 - [x] Documented local pipeline reproduction commands.
 - [ ] Independently verify installation and execution from a clean clone.
 - [ ] Complete manual AWS IAM, credentials-history, and cost review.
-- [ ] Confirm GitHub Actions checks pass at the final release commit.
-- [ ] Publish the v0.1.0 GitHub release.
+- [x] Published the v0.1.0 initial portfolio release on November 11, 2026.
+- [x] Latest inspected offline CI and consolidated regression workflows passed on November 20, 2026.
+- [ ] Independently validate the complete deployment and operational security configuration.
 
 **Release decision:** Ready for manual review. Not production-certified.
 
