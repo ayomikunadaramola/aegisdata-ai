@@ -99,7 +99,7 @@ The package metadata in [`pyproject.toml`](pyproject.toml) permits Python `>=3.1
 
 The project uses synthetic business entities such as **customers, products, orders, and payments** to exercise an e-commerce-style pipeline without real customer records. Generate source data using the local generator implementation, then review the output schema, keys, timestamps, missingness, and referential relationships before ingestion.
 
-**Important:** Generator commands and arguments should be confirmed against the local script before publishing a one-command reproduction recipe. The current repository inventory includes a local generator-related script (`debug_generators.py`), but the complete generator entry point is not yet verified in the published Git tree.
+**Important:** The synthetic data generator is published at `data/synthetic/generate_ecommerce_data.py`. It generates and validates five synthetic commerce datasets containing 46,000 records: customers (5,000), products (500), orders (20,000), payments (20,000), and inventory (500).
 
 ### 2. Bronze: ingest raw data
 
@@ -350,7 +350,7 @@ For the intentionally lean offline regression environment:
 python -m pip install -r requirements-ci.txt
 ```
 
-**Do not treat the currently committed `requirements.txt` as portable:** it contains a local Windows editable path (`-e c:\\aws-ai-projects\\aegisdata-ai`) and should be regenerated/cleaned before it is used as a public installation manifest.
+The repository's `requirements.txt` uses `-e .` for editable installation from the repository root. Project dependencies are defined in `pyproject.toml`. Python 3.12 is the documented development environment.
 
 ### Step 3: Configure environment and AWS access (live features only)
 
