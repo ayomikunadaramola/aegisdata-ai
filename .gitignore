@@ -92,3 +92,22 @@ Thumbs.db
 
 # Jupyter
 .ipynb_checkpoints/
+
+
+# Additional local credentials and configuration
+.aws/
+credentials
+credentials.json
+service-account.json
+
+# Local databases and SQLite artifacts
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Additional local data artifacts
+*.parquet
+*.crc
