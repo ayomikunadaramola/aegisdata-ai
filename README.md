@@ -317,6 +317,7 @@ aegisdata-ai/
 This is a **conceptual** workspace tree. Published source directories are tracked, while optional workspaces (`api/`, `data/`, `ml/`, `reports/`) may be local-only or empty. Generated data, private logs and Terraform state remain excluded.
 
 ## Local development and setup
+This section covers environment setup, AWS configuration, local checks, and dashboard execution. For the complete Bronze → Silver → Gold workflow, see [Run the Local Data Engineering Pipeline](#run-the-local-data-engineering-pipeline).
 
 ### Prerequisites
 
@@ -371,7 +372,7 @@ python -m pytest -o addopts="" tests/test_phase8e_guard.py tests/test_phase8f_ob
 python -m agents.data_quality.phase8h_security
 ```
 
-The pipeline source is published. Executing the entire pipeline still requires local test data, compatible Spark tooling, and verification of the current script arguments and execution order.
+The repository includes a documented Bronze → Silver → Gold execution workflow, previously validated in the Windows development environment. See [Run the Local Data Engineering Pipeline](#run-the-local-data-engineering-pipeline) for the commands and demonstrated results. Independent execution from a clean clone remains to be verified.
 
 ### Step 5: Inspect validation and launch the dashboard
 
@@ -437,22 +438,11 @@ The published `main` Git tree contains the Bronze ingestion, Silver/Gold pipelin
 
 On the inspected commit `86cbeb3f`, both the **Offline CI** and **Phase 8I consolidated offline regression** GitHub Actions runs succeeded. The local Phase 8J-D reconciliation returned **29/29 PASS**, and the local Phase 8J-E acceptance returned **READY_FOR_MANUAL_REVIEW**. Evidence is scoped to those runs.
 
-### Reproducing the Local Data Engineering Pipeline
+### Run the Local Data Engineering Pipeline
 
 AegisData AI includes a reproducible synthetic ecommerce data pipeline implemented with Python, SQLite, and PySpark. The workflow follows a Bronze → Silver → Gold architecture.
 
-**Prerequisites**
-
-- Python 3.12 and an activated virtual environment
-- A compatible Java installation for PySpark
-- Required Python dependencies installed from `pyproject.toml`
-- On Windows, the configured local Hadoop utilities where required by Spark
-
-**Install dependencies**
-
-```cmd
-python -m pip install -e ".[dev]"
-```
+Before running the pipeline, complete the [Local development and setup](#local-development-and-setup) instructions, including Python 3.12, the project dependencies, a compatible Java installation, and any required Windows Spark/Hadoop utilities.
 
 **Generate synthetic data**
 
